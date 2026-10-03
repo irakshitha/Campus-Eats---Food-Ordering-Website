@@ -1,9 +1,8 @@
 /**
- * Admin Dashboard Logic
+ * Admin Dashboard Logic (Async - Appwrite)
  */
 
-// Check Auth
-const admin = JSON.parse(localStorage.getItem(DB_KEYS.CURRENT_ADMIN));
+const admin = AppwriteAuth.getCurrentAdmin();
 if (!admin) {
     window.location.href = 'admin-login.html';
 }
@@ -14,8 +13,8 @@ const pendingContainer = document.getElementById('pendingOrders');
 const activeContainer = document.getElementById('activeOrders');
 const completedContainer = document.getElementById('completedOrders');
 
-function renderDashboard() {
-    const orders = DataManager.getShopOrders(admin.id);
+async function renderDashboard() {
+    const orders = await DataManager.getShopOrders(admin.id);
 
     // Calculate Stats
     let revenue = 0;
@@ -41,7 +40,7 @@ function renderDashboard() {
         const cardHtml = `
             <div class="card order-card status-${currentStatus.toLowerCase().replace(' ', '-')}" style="padding: 15px;">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                    <span style="font-weight: bold; font-size: 1.2rem;">${tokenObj.token}</span>
+                    <span style="font-weight: bold; font-size: 1.2rem;">${tokenObj ? tokenObj.token : 'N/A'}</span>
                     <span style="color: #666;">₹${shopTotal}</span>
                 </div>
                 <div style="margin-bottom: 10px; font-size: 0.9rem;">
@@ -73,21 +72,21 @@ function renderDashboard() {
     document.getElementById('totalRevenue').textContent = revenue;
 }
 
-function updateStatus(orderId, newStatus) {
+async function updateStatus(orderId, newStatus) {
     if (confirm(`Change status to ${newStatus}?`)) {
-        DataManager.updateOrderStatus(orderId, admin.id, newStatus);
-        renderDashboard();
+        await DataManager.updateOrderStatus(orderId, admin.id, newStatus);
+        await renderDashboard();
     } else {
-        renderDashboard(); // Revert select if cancelled
+        await renderDashboard();
     }
 }
 
 function logout() {
-    localStorage.removeItem(DB_KEYS.CURRENT_ADMIN);
+    AppwriteAuth.logoutAdmin();
     window.location.href = 'admin-login.html';
 }
 
-// Auto refresh every 10 seconds to simulate real-time
+// Auto refresh every 10 seconds
 setInterval(renderDashboard, 10000);
 
 renderDashboard();

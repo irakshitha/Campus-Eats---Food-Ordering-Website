@@ -7,6 +7,23 @@
     <title>Shop Login - CampusEats</title>
     <link rel="stylesheet" href="../css/main.css">
     <link rel="stylesheet" href="../css/admin.css">
+    <style>
+        .loading-spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 0.6s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 
 <body>
@@ -18,13 +35,13 @@
         <form id="adminLoginForm">
             <div class="form-group">
                 <label>Shop ID</label>
-                <input type="text" id="shopId" placeholder="e.g. shop_g1" required>
+                <input type="text" id="shopId" placeholder="Enter your Shop ID" required>
             </div>
             <div class="form-group">
                 <label>Password</label>
                 <input type="password" id="password" required>
             </div>
-            <button type="submit" class="btn btn-secondary" style="width: 100%;">Access Dashboard</button>
+            <button type="submit" id="adminLoginBtn" class="btn btn-secondary" style="width: 100%;">Access Dashboard</button>
         </form>
 
         <p style="text-align: center; margin-top: 15px;">
@@ -32,28 +49,39 @@
         </p>
     </div>
 
-    <script src="../js/data.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/appwrite@16.0.0"></script>
+    <script src="../js/appwrite.js"></script>
+    <script src="../js/appwrite-auth.js"></script>
+    <script src="../js/appwrite-db.js"></script>
     <script>
-        // Inline script for simple login logic
-        document.getElementById('adminLoginForm').addEventListener('submit', (e) => {
+        // Check if already logged in
+        const admin = AppwriteAuth.getCurrentAdmin();
+        if (admin) {
+            window.location.href = 'dashboard.html';
+        }
+
+        document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const shopId = document.getElementById('shopId').value.trim();
             const password = document.getElementById('password').value.trim();
             const errorMsg = document.getElementById('errorMsg');
+            const btn = document.getElementById('adminLoginBtn');
 
-            if (ADMIN_CREDENTIALS[shopId] && ADMIN_CREDENTIALS[shopId] === password) {
-                // Save Session
-                const shop = DataManager.getShopDetails(shopId);
-                if (shop) {
-                    localStorage.setItem(DB_KEYS.CURRENT_ADMIN, JSON.stringify(shop));
-                    window.location.href = 'dashboard.html';
-                } else {
-                    errorMsg.textContent = 'Invalid Shop ID Logic Error';
-                    errorMsg.classList.remove('hidden');
-                }
+            errorMsg.classList.add('hidden');
+
+            btn.dataset.originalText = btn.textContent;
+            btn.innerHTML = '<span class="loading-spinner"></span> Logging in...';
+            btn.disabled = true;
+
+            const result = await AppwriteAuth.loginAdmin(shopId, password);
+
+            if (result.success) {
+                window.location.href = 'dashboard.html';
             } else {
-                errorMsg.textContent = 'Invalid Credentials. Try shop_g1 / pass123';
+                errorMsg.textContent = result.message;
                 errorMsg.classList.remove('hidden');
+                btn.textContent = btn.dataset.originalText;
+                btn.disabled = false;
             }
         });
     </script>

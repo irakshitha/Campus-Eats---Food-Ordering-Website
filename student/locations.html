@@ -14,7 +14,7 @@
     <header class="header">
         <div class="container navbar">
             <div style="display: flex; align-items: center;">
-                <a href="../index.html" class="btn-back" title="Log Out / Home">←</a>
+                <a href="#" onclick="logoutStudent()" class="btn-back" title="Log Out / Home">←</a>
                 <div class="logo">CampusEats</div>
             </div>
             <div class="nav-links">
@@ -37,8 +37,17 @@
         </div>
     </div>
 
-    <script src="../js/data.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/appwrite@16.0.0"></script>
+    <script src="../js/appwrite.js"></script>
+    <script src="../js/appwrite-auth.js"></script>
+    <script src="../js/appwrite-db.js"></script>
     <script src="../js/locations.js"></script>
+    <script>
+        async function logoutStudent() {
+            await AppwriteAuth.logoutStudent();
+            window.location.href = '../index.html';
+        }
+    </script>
 </body>
 
 </html>

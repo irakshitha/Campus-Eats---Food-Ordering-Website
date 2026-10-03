@@ -1,37 +1,45 @@
 /**
- * Locations Page Logic
+ * Locations Page Logic (Async - Appwrite)
  */
 
-// Check Auth
-const user = localStorage.getItem(DB_KEYS.CURRENT_USER);
-if (!user) {
-    window.location.href = 'login.html';
-}
+(async () => {
+    // Check Auth
+    const user = await AppwriteAuth.getCurrentStudent();
+    if (!user) {
+        window.location.href = 'login.html';
+        return;
+    }
 
-const locationsContainer = document.getElementById('locationsContainer');
-const locations = DataManager.getLocations();
+    const locationsContainer = document.getElementById('locationsContainer');
+    const locations = await DataManager.getLocations();
 
-// Render Locations with modern cards
-locationsContainer.innerHTML = locations.map(loc => `
-    <div class="location-card" onclick="selectLocation('${loc.id}')">
-        <div class="location-image">
-            <div class="location-icon">${loc.icon || '📍'}</div>
-        </div>
-        <div class="location-content">
-            <div class="location-name">${loc.name}</div>
-            <div class="location-meta">
-                <span>🏪 ${DataManager.getShops(loc.id).length} shops</span>
+    // For each location, count shops
+    const locationsWithCounts = [];
+    for (const loc of locations) {
+        const shops = await DataManager.getShops(loc.id);
+        locationsWithCounts.push({ ...loc, shopCount: shops.length });
+    }
+
+    // Render Locations with modern cards
+    locationsContainer.innerHTML = locationsWithCounts.map(loc => `
+        <div class="location-card" onclick="selectLocation('${loc.id}')">
+            <div class="location-image">
+                <div class="location-icon">${loc.icon || '📍'}</div>
+            </div>
+            <div class="location-content">
+                <div class="location-name">${loc.name}</div>
+                <div class="location-meta">
+                    <span>🏪 ${loc.shopCount} shops</span>
+                </div>
             </div>
         </div>
-    </div>
-`).join('');
+    `).join('');
+
+    // Update Cart Badge
+    const cart = DataManager.getCart();
+    document.getElementById('cartBadge').textContent = cart.length;
+})();
 
 function selectLocation(id) {
-    // Pass location ID via URL parameter
     window.location.href = `shops.html?locationId=${id}`;
 }
-
-// Update Cart Badge
-const cart = JSON.parse(localStorage.getItem(DB_KEYS.CART) || '[]');
-document.getElementById('cartBadge').textContent = cart.length;
-

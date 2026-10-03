@@ -1,9 +1,8 @@
 /**
- * Stock Management Logic
+ * Stock Management Logic (Async - Appwrite)
  */
 
-// Check Auth
-const admin = JSON.parse(localStorage.getItem(DB_KEYS.CURRENT_ADMIN));
+const admin = AppwriteAuth.getCurrentAdmin();
 if (!admin) {
     window.location.href = 'admin-login.html';
 }
@@ -11,8 +10,8 @@ if (!admin) {
 document.getElementById('shopName').textContent = admin.name;
 const stockContainer = document.getElementById('stockContainer');
 
-function renderStock() {
-    const menu = DataManager.getMenu(admin.id);
+async function renderStock() {
+    const menu = await DataManager.getMenu(admin.id);
 
     stockContainer.innerHTML = menu.map(item => `
         <div class="stock-item">
@@ -30,24 +29,24 @@ function renderStock() {
     `).join('');
 }
 
-function updateStock(itemId) {
+async function updateStock(itemId) {
     const newVal = document.getElementById(`stock-${itemId}`).value;
     if (newVal < 0) {
         alert('Stock cannot be negative');
         return;
     }
 
-    const success = DataManager.updateStock(itemId, newVal);
+    const success = await DataManager.updateStock(itemId, newVal);
     if (success) {
         alert('Stock Updated!');
-        renderStock(); // Refresh to confirm
+        await renderStock();
     } else {
         alert('Update Failed');
     }
 }
 
 function logout() {
-    localStorage.removeItem(DB_KEYS.CURRENT_ADMIN);
+    AppwriteAuth.logoutAdmin();
     window.location.href = 'admin-login.html';
 }
 
